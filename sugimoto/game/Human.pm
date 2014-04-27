@@ -12,7 +12,7 @@ use Class::Accessor::Lite (
           defense
           speed
           attack_serif
-          last_selif
+          last_serif
           special_serif
           /
     ],

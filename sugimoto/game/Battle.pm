@@ -14,7 +14,8 @@ my @chara = qw/
 	RedRanger
 	/;
 
-#★この書き方もっとスマートなのあるだろうか
+#バトル開始時に表示したいステータスを指定する。
+#この書き方もっとスマートなのあるだろうか…
 my @PRINT_STATUS = ("name", "hp", "attack", "defense", "speed");
 
 #クラスを、↑の配列の中からランダムで抽選する
@@ -30,14 +31,13 @@ my $player2 = $class2->build();
 #バトル実行
 _main();
 
-_exec_battle();
-
 sub _main {
-	#表示したいステータスを渡してプリント
+	#表示したいステータスを渡せば、バトル開始時に二人の名前とステータスが表示される
 	_print_battle_start( \@PRINT_STATUS );
-	#実際にバトルを行う
-#	my $winner = _exec_battle();
-#	_print_battle_end($winner);
+	#実際にバトルを行い、勝者を取得する
+	my $winner = _exec_battle();
+	#勝者の名前とセリフを表示してバトル終了
+	_print_battle_end($winner);
 }
 
 
@@ -50,28 +50,34 @@ sub _main {
 }
 
 sub _exec_battle{
-	#プレイヤーに「カレントHP」という一時的なHPを作る。ここをバトルで上書きしていく。
+	#プレイヤーのHPの値をコピって「カレントHP」を作りオブジェクトに持たせる。ここをバトルで上書きしていく。
 	$player1->{current_hp} = $player1->get_status("hp");
 	$player2->{current_hp} = $player2->get_status("hp");	
 
 	#スピードの早い方を最初のアタッカーにする
 	my $attacker =  _get_first_atacker($player1, $player2);
+	#アタッカーじゃない方をディフェンダーにする
  	my $defender = ($attacker == $player1) ? $player2 : $player1;
-# 　　AorBのカレントHPが0以上の間、ループさせる。2回め以降はループの中で、「前と違うほう」を攻撃者にする
-	while ( $attacker->{current_hp} > 0 && $defender->{current_hp} > 0){
-		#スピードの遅い方は最初はディフェンダー
 
- 		#一発ずつ攻撃。攻撃の結果が出力される。
+	#AorBのカレントHPが0以上の間、ループさせる。2回め以降はループの中で、「前と違うほう」を攻撃者にする
+	while ( $attacker->{current_hp} > 0 && $defender->{current_hp} > 0){
+ 		#アタッカー→ディフェンダーに一発攻撃
  		_attack($attacker, $defender);
+ 		#アタッカーとディフェンダーを入れ替える		
  		$attacker = ($attacker == $player1) ? $player2 : $player1;
  		$defender = ($attacker == $player1) ? $player2 : $player1;
  	 }
+	#この時点でのディフェンダーが最後のアタッカー＝勝者なので、この人物を勝者として返す
+ 	 return $defender;
 }
 
+#アタッカー->ディフェンダーに一発攻撃して、攻撃結果をハッシュにして返す
 sub _attack{
 	my ($attacker, $defender) = @_;
 	if ($attacker->{attack} >= $defender->{defense}){
+		#アタッカーのattackがディフェンダーのdefenseを上回っている場合は、attack-defenseのぶんだけカレントHPを削る
 		$defender->{current_hp} -= ($attacker->{attack} - $defender->{defense});
+		#攻撃結果を返す
 		my $attack_result = +{
 			attacker_name => $attacker->{name},
 			defender_name => $defender->{name},
@@ -79,32 +85,50 @@ sub _attack{
 			damage => $attacker->{attack} - $defender->{defense},
 			current_hp => $defender->{current_hp}
 		};
-		print Dumper($attack_result);
-#		_print_attack_result($attack_result);
+		# 攻撃結果を表示
+		_print_attack_result($attack_result);
+
 	} else {
-		print "ミス！ダメージを与えられない！！\n";
-#		_attack_failure($attacker, $defender);
+		#アタッカーのattackがディフェンダーのdefenseを下回っている場合は、1だけカレントHPを削る
+		$defender->{current_hp} -= 1;
+		my $attack_result = +{
+			attacker_name => $attacker->{name},
+			defender_name => $defender->{name},
+			attack_serif => $attacker->{attack_serif},
+			damage => 1,
+			current_hp => $defender->{current_hp}
+		};
+		# 攻撃結果を表示
+		_print_attack_result($attack_result);
 	}
 }
 
-=pod
-2 
-　　攻撃を行う　⇒　攻撃で受けたダメージをカレントHPから削る
-　　1撃のたびにバトル結果をプリント
 
-  どちらかが0を切ったら終了し、勝者のIDを返す
-
-勝者のIDを受けて勝利セリフをプリントする
-
-攻撃
-　　自分のattack - 相手のdefenseの差分をダメージとしてhpから削り、返す
-　　　－相手のdefenceが自分のattackを上回ってない場合のみ実行
-=cut
-
-#スピードの早い方のプレイヤーを先攻とする
+#プレイヤー1と2のうち、スピードの早い方のプレイヤーを先攻とする
 sub _get_first_atacker{
 	my ($player1, $player2) = @_;
 	my $player1_speed = $player1->get_status("speed");
 	my $player2_speed = $player2->get_status("speed");
+	#1と2が同じの場合は、1を先行とする
 	return ($player1_speed >= $player2_speed) ? $player1 : $player2 ;
+}
+
+#attack_resultを受け取っていい感じに体裁を整える
+sub _print_attack_result {
+	my ($attack_result) = @_;
+	print 
+	"------------------------- \n" .
+	"$attack_result->{attacker_name}" . " から " . "$attack_result->{defender_name}" . " への攻撃! \n" .
+	"「 $attack_result->{attack_serif} 」 \n" .
+	"$attack_result->{defender_name} " . "に" . "$attack_result->{damage}" . "のダメージ！ \n" .
+	"残りHP" . "$attack_result->{current_hp} \n" .
+	"------------------------- \n" ;
+}
+
+#バトル終了時に、勝者の名前とセリフをプリントする
+sub _print_battle_end{
+	my ($winner) = @_;
+	print
+	"****" . "$winner->{name}" . "の勝利！**** \n" .
+	"$winner->{last_serif} \n" ;
 }
