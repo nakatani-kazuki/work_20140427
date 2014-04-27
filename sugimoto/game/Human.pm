@@ -59,6 +59,8 @@ sub build {
 
 # 80 〜 100 でランダム(build時に確定)
 sub _get_hp {
+	# この辺の設定周りは本来はファイルの上部にまとめるか、
+	# Conf.pmみたいなファイルに切り出すとかする
 	my $min = 80;
 	my $max = 100;
 	return _get_rand_num($min, $max);
@@ -85,12 +87,17 @@ sub _get_speed {
 	return _get_rand_num($min, $max);
 }
 
+# こういう汎用的な関数はUtil.pmみたいなのに切り出しておくと
+# Battle.pmとかでも使いたくなった時に使いやすい
 # minとmaxの間の数をランダムに選んで返す
 sub _get_rand_num {
 	my ($min , $max) = @_;
 	return int (rand(($max+1) - $min)) + $min;
 }
 
+# この辺の作りは汎用性高めに作ってあるからええ感じ
+# 返り値が「単一 <-> 複数」は関数名から判断出来たほうがいいので
+# この場合は _get_serif_set とかがよさそうかも
 sub _get_serif {
 	my $chara_id = _get_rand_num(0 , $#$SERIF_CONF);
 	return @$SERIF_CONF[$chara_id];
@@ -98,6 +105,18 @@ sub _get_serif {
 
 #外からステータスを渡されると、オブジェクトの中からステータスの値を探しだしてプリントする
 #selfの書き方が腹に落ちないがこんな書き方でいいのだろうか
+=pod
+->battle周りのロジックを書く時に何を出力するかを簡単に書き換えるようにしたいんならこの実装は全然あり。
+特に違和感も感じない
+ただし存在しないキーを指定された時は死にそう
+
+for (@$print_status) {
+	die 'no such member!' unless ($self->can());
+	print "$_ : " . "$self->{$_} \n"
+}
+
+とかにしておくとなんで死んだのかがわかりやすいかも
+=cut
 sub print_status {
 	my ($self, $print_status) = @_;
 	print "============================= \n";
@@ -105,6 +124,13 @@ sub print_status {
 	print "============================= \n";
 }
 
+=pod
+これはなぜ必要なのか？
+$player1->get_status("speed");
+じゃなくても
+$player1->speed;
+でけるんじゃなかろうか
+=cut
 #外からステータスを渡されると、オブジェクトの中からステータスの値を探しだして返す
 sub get_status {
 	my ($self, $status) = @_;

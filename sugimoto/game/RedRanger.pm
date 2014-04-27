@@ -10,6 +10,8 @@ use parent qw/Human/;
 my $SERIF_CONF = +{
 	special  => "レッドチャーージ！ファイナルウェィィィッィィブ！"
 };
+# この辺の設定系の変数名は大文字で $CHARACTER_NAMEとかにすることが多い。
+# 動的な変数との区別をつけやすくするためだったり
 my $name = "ゴーカイレッド";
 
 
@@ -29,6 +31,9 @@ sub build {
 sub henshin{
 	my ($self) = @_;
 	$self->name( $name );
+	# この辺の設定は上の方に切り出したほうがええかな
+	# 基本的には「とりあえず」でもコードの中にはあまりマジックナンバーは書かない方がいい
+	# 変数として同じファイルの上部に切り出すぐらいならそんなにめんどくさくないはず
 	$self->hp( int($self->hp() * 1.5) );
 	$self->attack( int($self->attack() * 1.3) );
 	$self->defense( int($self->defense() * 0.9) );
