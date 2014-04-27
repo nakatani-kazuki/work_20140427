@@ -8,6 +8,8 @@ use parent qw/Human/;
 
 #アカレンジャーの個性
 my $SERIF_CONF = +{
+	attack   => "派手に行くぜ！",
+	last     => "これが海賊ってもんだろ！",
 	special  => "レッドチャーージ！ファイナルウェィィィッィィブ！"
 };
 my $name = "ゴーカイレッド";
@@ -33,6 +35,8 @@ sub henshin{
 	$self->attack( int($self->attack() * 1.3) );
 	$self->defense( int($self->defense() * 0.9) );
 	$self->speed( int($self->speed() * 0.6) );
+	$self->attack_serif( $SERIF_CONF->{attack} );
+	$self->last_serif( $SERIF_CONF->{last} );
 	$self->special_serif( $SERIF_CONF->{special} );
 }
 
