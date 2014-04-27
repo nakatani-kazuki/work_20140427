@@ -5,13 +5,20 @@ use Data::Dumper;
 # 使うキャラクターを読み込む
 use Human;
 use RedRanger;
+use BlueRanger;
+use YellowRanger;
+use Shocker;
+use Kaijin;
 
 #ランダムでクラスを取得する方法
-
 #配列の中に登場しうるクラス名を書いておく
 my @chara = qw/
 	Human
 	RedRanger
+	BlueRanger
+	YellowRanger
+	Shocker
+	Kaijin
 	/;
 
 #バトル開始時に表示したいステータスを指定する。
